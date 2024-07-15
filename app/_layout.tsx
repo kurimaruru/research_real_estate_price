@@ -1,6 +1,8 @@
-import { ClerkProvider, ClerkLoaded } from "@clerk/clerk-expo";
-import { Slot } from "expo-router";
-
+import { Stack, useRouter } from "expo-router";
+import { useEffect } from "react";
+import { ClerkProvider, useAuth, ClerkLoaded } from "@clerk/clerk-expo";
+import { Ionicons } from "@expo/vector-icons";
+import { TouchableOpacity } from "react-native";
 const publishableKey = process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY!;
 
 if (!publishableKey) {
@@ -9,14 +11,48 @@ if (!publishableKey) {
   );
 }
 
-function RootLayoutNav() {
+function RootLayout() {
   return (
     <ClerkProvider publishableKey={publishableKey}>
       <ClerkLoaded>
-        <Slot />
+        {/* Slotで現在のルートに基づいて適切なページやコンポーネントをレンダリング */}
+        {/* <Slot /> */}
+        <RootLayoutNav />
       </ClerkLoaded>
     </ClerkProvider>
   );
 }
 
-export default RootLayoutNav;
+function RootLayoutNav() {
+  const { isLoaded, isSignedIn } = useAuth();
+  const router = useRouter();
+
+  // Automatically open login if user is not authenticated
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      router.push("/(modals)/login");
+    }
+  }, [isLoaded]);
+
+  return (
+    <Stack>
+      <Stack.Screen
+        name="(modals)/login"
+        options={{
+          presentation: "modal",
+          title: "Log in or sign up",
+          headerTitleStyle: {
+            fontFamily: "mon-sb",
+          },
+          headerLeft: () => (
+            <TouchableOpacity onPress={() => router.back()}>
+              <Ionicons name="close-outline" size={28} />
+            </TouchableOpacity>
+          ),
+        }}
+      />
+    </Stack>
+  );
+}
+
+export default RootLayout;
